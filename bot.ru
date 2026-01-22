@@ -113,7 +113,7 @@ async def postpone(callback: CallbackQuery):
 # ========== Запуск ==========
 async def main():
     scheduler = AsyncIOScheduler(timezone=tz)
-    scheduler.add_job(send_daily_menu, "cron", hour=17, minute=0)
+    scheduler.add_job(send_daily_menu, "cron", hour=20, minute=47)
     scheduler.add_job(reset_day, "cron", hour=0, minute=0)
     scheduler.start()
     await dp.start_polling(bot)
