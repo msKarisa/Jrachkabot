@@ -7,6 +7,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import CommandStart
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from aiohttp import web
 
 # ========== Настройки ==========
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -110,13 +111,35 @@ async def postpone(callback: CallbackQuery):
     await callback.message.answer("Пополнить запасы харчевни?🧌", reply_markup=main_menu())
     await callback.answer()
 
+# ========== Фиктивный HTTP-сервер для Render ==========
+async def handle(request):
+    return web.Response(text="Bot is running!")
+
+async def start_web_server():
+    app = web.Application()
+    app.add_routes([web.get("/", handle)])
+    runner = web.AppRunner(app)
+    await runner.setup()
+    port = int(os.environ.get("PORT", 10000))  # Render задаёт PORT автоматически
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+
 # ========== Запуск ==========
 async def main():
+    # запускаем фиктивный веб-сервер, чтобы Render был доволен
+    await start_web_server()
+
+    # scheduler для ежедневной рассылки
     scheduler = AsyncIOScheduler(timezone=tz)
-    scheduler.add_job(send_daily_menu, "cron", hour=20, minute=48)
+    scheduler.add_job(send_daily_menu, "cron", hour=17, minute=0)
     scheduler.add_job(reset_day, "cron", hour=0, minute=0)
     scheduler.start()
-    await send_daily_menu()
+
+    # ===== ТЕСТОВЫЙ ВЫЗОВ, чтобы проверить работу прямо сейчас =====
+    # await send_daily_menu()
+    # =========================================
+
+    # запускаем бота
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
