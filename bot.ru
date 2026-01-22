@@ -116,6 +116,7 @@ async def main():
     scheduler.add_job(send_daily_menu, "cron", hour=20, minute=48)
     scheduler.add_job(reset_day, "cron", hour=0, minute=0)
     scheduler.start()
+    await send_daily_menu()
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
