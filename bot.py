@@ -19,7 +19,7 @@ watchers = set()
 main_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="Пополнить запасы 🥦")],
-        [KeyboardButton(text="Продовольствия хватает 🍕")]
+        [KeyboardButton(text="Продовольствия хватает 🍕")],
         [KeyboardButton(text="Продовольствия хватает 🍕")]
     ],
     resize_keyboard=True
