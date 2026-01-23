@@ -20,7 +20,7 @@ main_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="Пополнить запасы 🥦")],
         [KeyboardButton(text="Продовольствия хватает 🍕")],
-        [KeyboardButton(text="Продовольствия хватает 🍕")]
+        [KeyboardButton(text="Посмотреть список жрачки 🍔")]
     ],
     resize_keyboard=True
 )
