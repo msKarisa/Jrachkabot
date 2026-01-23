@@ -20,17 +20,11 @@ main_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="Пополнить запасы 🥦")],
         [KeyboardButton(text="Продовольствия хватает 🍕")]
+        [KeyboardButton(text="Продовольствия хватает 🍕")]
     ],
     resize_keyboard=True
 )
 
-watcher_keyboard = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="Посмотреть список жрачки 🍔")],
-        [KeyboardButton(text="Отложить 🙄")]
-    ],
-    resize_keyboard=True
-)
 
 # ===== /start =====
 @dp.message(Command("start"))
@@ -69,7 +63,7 @@ async def show_list(message: types.Message):
 
     await message.answer(
         text + "\nНапиши номер, чтобы принять участь 💀",
-        reply_markup=watcher_keyboard
+        reply_markup=main_keyboard
     )
 
 # ===== ОТЛОЖИТЬ =====
@@ -98,7 +92,7 @@ async def handle_text(message: types.Message):
                 await bot.send_message(
                     watcher,
                     "🏰 Княжество голодает!",
-                    reply_markup=watcher_keyboard
+                    reply_markup=main_keyboard
                 )
         return
 
