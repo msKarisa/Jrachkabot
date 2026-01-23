@@ -10,9 +10,10 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(BOT_TOKEN)
 dp = Dispatcher()
 
-# ===== ПАМЯТЬ БОТА =====
+# ===== ПАМЯТЬ =====
 shopping_list = []
 waiting_for_items = set()
+watchers = set()  # те, кому приходят уведомления
 
 # ===== КНОПКИ =====
 main_keyboard = ReplyKeyboardMarkup(
@@ -23,40 +24,86 @@ main_keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
+watcher_keyboard = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="Посмотреть список жрачки 🍔")],
+        [KeyboardButton(text="Отложить 🙄")]
+    ],
+    resize_keyboard=True
+)
+
 # ===== /start =====
 @dp.message(Command("start"))
 async def start(message: types.Message):
+    watchers.add(message.from_user.id)
     await message.answer(
-        "Пополнить запасы харчевни? 🧌",
+        "Я бот-харчевник 🧌\nПополнить запасы харчевни?",
         reply_markup=main_keyboard
     )
 
-# ===== НАЖАЛИ «ПОПОЛНИТЬ ЗАПАСЫ» =====
+# ===== ПОПОЛНИТЬ =====
 @dp.message(lambda m: m.text == "Пополнить запасы 🥦")
 async def add_items(message: types.Message):
     waiting_for_items.add(message.from_user.id)
-    await message.answer("Пиши, что нужно купить 📝")
+    await message.answer("Пиши продукты. Каждый пункт — отдельным сообщением 📝")
 
-# ===== НАЖАЛИ «ХВАТАЕТ» =====
+# ===== ХВАТАЕТ =====
 @dp.message(lambda m: m.text == "Продовольствия хватает 🍕")
 async def enough_food(message: types.Message):
-    await message.answer(
-        "Хорошо, напомню позже 🧌",
-        reply_markup=main_keyboard
-    )
+    await message.answer("Ладно… пока 😶", reply_markup=main_keyboard)
+
+# ===== ПРОСМОТР СПИСКА =====
+@dp.message(lambda m: m.text == "Посмотреть список жрачки 🍔")
+async def show_list(message: types.Message):
+    if not shopping_list:
+        await message.answer("Харчевня пуста 🍽️")
+        return
+
+    text = "🏰 Княжество голодает!\n\n"
+    for i, item in enumerate(shopping_list, 1):
+        text += f"{i}. {item}\n"
+
+    await message.answer(text + "\nНапиши номер, чтобы принять участь 💀")
+
+# ===== ОТЛОЖИТЬ =====
+@dp.message(lambda m: m.text == "Отложить 🙄")
+async def postpone(message: types.Message):
+    await message.answer("Отложено. Но голод помнит 😈", reply_markup=main_keyboard)
 
 # ===== ПРИНИМАЕМ ТЕКСТ =====
 @dp.message()
 async def handle_text(message: types.Message):
     user_id = message.from_user.id
+    text = message.text.strip()
 
+    # добавление еды
     if user_id in waiting_for_items:
-        shopping_list.append(message.text)
+        shopping_list.append(text)
         await message.answer("Записал 🧾")
-    else:
-        await message.answer("Выбери действие кнопкой 👇", reply_markup=main_keyboard)
 
-# ===== ФИКТИВНЫЙ СЕРВЕР ДЛЯ RENDER =====
+        # уведомляем наблюдателей
+        for watcher in watchers:
+            if watcher != user_id:
+                await bot.send_message(
+                    watcher,
+                    "🏰 Княжество голодает!",
+                    reply_markup=watcher_keyboard
+                )
+        return
+
+    # удаление по номеру
+    if text.isdigit():
+        index = int(text) - 1
+        if 0 <= index < len(shopping_list):
+            removed = shopping_list.pop(index)
+            await message.answer(f"💀 Участь принята: {removed}")
+        else:
+            await message.answer("Такого пункта нет 🤷‍♀️")
+        return
+
+    await message.answer("Используй кнопки 👇", reply_markup=main_keyboard)
+
+# ===== WEB SERVER (Render) =====
 async def handle(request):
     return web.Response(text="Bot is running!")
 
